@@ -4,667 +4,1462 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LLM Observability Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --border: #2a2d3a;
-      --text: #e2e4ed;
-      --muted: #8b8fa8;
-      --accent: #6c8ef7;
-      --accent-dim: #1e2640;
-      --green: #4ade80;
-      --red: #f87171;
-      --yellow: #fbbf24;
-      --code-bg: #12141e;
-      --radius: 8px;
-      --max-w: 860px;
+      --bg: #08090c;
+      --bg2: #0e1016;
+      --surface: #13151d;
+      --surface2: #181b25;
+      --border: rgba(255,255,255,0.07);
+      --border-strong: rgba(255,255,255,0.12);
+      --text: #dde0ec;
+      --muted: #6b7094;
+      --faint: #3a3e55;
+      --accent: #5b8af0;
+      --accent-glow: rgba(91,138,240,0.15);
+      --accent-dim: rgba(91,138,240,0.1);
+      --green: #3ecf8e;
+      --green-dim: rgba(62,207,142,0.1);
+      --yellow: #f0b429;
+      --yellow-dim: rgba(240,180,41,0.1);
+      --red: #f06070;
+      --code-bg: #0b0d13;
+      --radius: 6px;
+      --radius-lg: 10px;
+      --max-w: 980px;
+      --font-display: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-mono: 'DM Mono', monospace;
     }
+
+    html { scroll-behavior: smooth; }
 
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: var(--font-body);
       font-size: 16px;
       line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
 
     a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
-    /* ── Layout ── */
-    header {
+    /* ── NAV ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      background: rgba(8,9,12,0.88);
+      backdrop-filter: blur(14px) saturate(1.4);
+      -webkit-backdrop-filter: blur(14px) saturate(1.4);
       border-bottom: 1px solid var(--border);
-      padding: 2.5rem 1.5rem 2rem;
-      text-align: center;
     }
 
-    header h1 {
-      font-size: clamp(1.6rem, 4vw, 2.4rem);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      color: #fff;
-      margin-bottom: 0.5rem;
-    }
-
-    header p {
-      color: var(--muted);
-      font-size: 1.05rem;
-      max-width: 560px;
-      margin: 0 auto 1.25rem;
-    }
-
-    .badge-row {
+    .nav-inner {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 1.5rem;
       display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 52px;
+    }
+
+    .nav-logo {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #fff;
+      letter-spacing: 0.01em;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .nav-logo:hover { text-decoration: none; }
+
+    .nav-links {
+      display: flex;
+      gap: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .nav-links::-webkit-scrollbar { display: none; }
+
+    .nav-links a {
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 400;
+      white-space: nowrap;
+      padding: 0.3rem 0.65rem;
+      border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+      letter-spacing: 0.01em;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+      background: var(--surface);
+      text-decoration: none;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 7rem 1.5rem 5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 55% at 50% -10%, rgba(91,138,240,0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 30% at 80% 60%, rgba(62,207,142,0.05) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--accent-dim);
+      border: 1px solid rgba(91,138,240,0.25);
+      border-radius: 999px;
+      padding: 0.25rem 0.85rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 1.75rem;
+    }
+
+    .hero-eyebrow::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2.1rem, 5.5vw, 3.8rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      color: #fff;
+      margin-bottom: 1.25rem;
+      position: relative;
+    }
+
+    .hero-sub {
+      font-size: clamp(0.95rem, 2vw, 1.12rem);
+      color: var(--muted);
+      max-width: 520px;
+      margin: 0 auto 2.25rem;
+      font-weight: 300;
+      line-height: 1.7;
+    }
+
+    .hero-ctas {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
       flex-wrap: wrap;
+      margin-bottom: 1.75rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.65rem 1.4rem;
+      border-radius: var(--radius);
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.18s;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .btn:hover { text-decoration: none; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: 1px solid transparent;
+    }
+
+    .btn-primary:hover {
+      background: #7099f3;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(91,138,240,0.3);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border-strong);
+    }
+
+    .btn-ghost:hover {
+      background: var(--surface);
+      border-color: var(--border-strong);
+      transform: translateY(-1px);
+    }
+
+    .hero-trust {
+      font-size: 0.78rem;
+      color: var(--faint);
+      letter-spacing: 0.02em;
+    }
+
+    .badge-strip {
+      display: flex;
       gap: 0.5rem;
       justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 3.5rem;
     }
 
     .badge {
-      background: var(--accent-dim);
-      color: var(--accent);
-      font-size: 0.78rem;
-      font-weight: 600;
-      padding: 0.25rem 0.7rem;
-      border-radius: 999px;
-      border: 1px solid var(--accent);
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-    }
-
-    main {
-      max-width: var(--max-w);
-      margin: 0 auto;
-      padding: 2.5rem 1.5rem 4rem;
-    }
-
-    section { margin-bottom: 3.5rem; }
-
-    h2 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 1rem;
-      padding-bottom: 0.4rem;
-      border-bottom: 1px solid var(--border);
-    }
-
-    h3 {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--text);
-      margin: 1.25rem 0 0.5rem;
-    }
-
-    p { margin-bottom: 0.75rem; color: var(--text); }
-    p:last-child { margin-bottom: 0; }
-
-    /* ── Cards ── */
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
-    .card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 1rem 1.1rem;
-    }
-
-    .card-label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
+      padding: 0.22rem 0.65rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
       color: var(--muted);
-      margin-bottom: 0.3rem;
+      letter-spacing: 0.04em;
     }
 
-    .card-value {
+    /* ── SECTION WRAPPER ── */
+    .section {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 4rem 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+      margin-bottom: 1rem;
+    }
+
+    .section-sub {
+      color: var(--muted);
+      font-size: 0.97rem;
+      max-width: 560px;
+      font-weight: 300;
+      line-height: 1.7;
+    }
+
+    /* ── PROBLEM SECTION ── */
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1px;
+      margin-top: 2.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      background: var(--border);
+    }
+
+    .problem-item {
+      background: var(--surface);
+      padding: 1.5rem;
+    }
+
+    .problem-item .pi-label {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--red);
+      margin-bottom: 0.4rem;
+      opacity: 0.8;
+    }
+
+    .problem-item .pi-problem {
       font-size: 0.95rem;
       color: var(--text);
       font-weight: 500;
+      margin-bottom: 0.4rem;
     }
 
-    /* ── Table ── */
-    .table-wrap { overflow-x: auto; margin-top: 1rem; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.9rem;
-    }
-
-    th {
-      text-align: left;
-      padding: 0.6rem 0.8rem;
-      background: var(--surface);
+    .problem-item .pi-fix {
+      font-size: 0.83rem;
       color: var(--muted);
-      font-weight: 600;
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      border-bottom: 1px solid var(--border);
+      font-weight: 300;
     }
 
-    td {
-      padding: 0.6rem 0.8rem;
-      border-bottom: 1px solid var(--border);
-      vertical-align: top;
+    /* ── METRIC CARDS ── */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.75rem;
+      margin-top: 2.5rem;
     }
 
-    tr:last-child td { border-bottom: none; }
-
-    /* ── Code ── */
-    pre {
-      background: var(--code-bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1rem 1.1rem;
-      overflow-x: auto;
-      font-size: 0.85rem;
-      line-height: 1.6;
-      margin: 1rem 0;
-    }
-
-    code {
-      font-family: "SF Mono", "Fira Code", Consolas, monospace;
-      color: #c9d1d9;
-    }
-
-    pre code { color: inherit; }
-
-    .inline-code {
-      background: var(--code-bg);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 0.1em 0.4em;
-      font-size: 0.85em;
-      font-family: "SF Mono", "Fira Code", Consolas, monospace;
-      color: #c9d1d9;
-    }
-
-    /* ── Architecture diagram ── */
-    .arch-box {
-      background: var(--code-bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.25rem 1.5rem;
-      font-family: "SF Mono", "Fira Code", Consolas, monospace;
-      font-size: 0.82rem;
-      line-height: 1.9;
-      color: #c9d1d9;
-      overflow-x: auto;
-      margin-top: 1rem;
-    }
-
-    .arch-box .dim { color: var(--muted); }
-    .arch-box .hi  { color: var(--accent); font-weight: 600; }
-    .arch-box .ok  { color: var(--green); }
-
-    /* ── Callout boxes ── */
-    .callout {
+    .metric-card {
       background: var(--surface);
-      border-left: 3px solid var(--accent);
-      border-radius: 0 var(--radius) var(--radius) 0;
-      padding: 1rem 1.1rem;
-      margin: 1.25rem 0;
-      font-size: 0.95rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.4rem 1.3rem;
+      transition: border-color 0.2s, transform 0.2s;
+      position: relative;
+      overflow: hidden;
     }
 
-    .callout p { margin: 0; }
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--accent);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
 
-    .callout.warning { border-left-color: var(--yellow); }
-    .callout.warning p { color: var(--text); }
+    .metric-card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+    }
 
-    /* ── Setup steps ── */
-    .steps { list-style: none; counter-reset: step; margin-top: 1rem; }
+    .metric-card:hover::before { opacity: 1; }
 
-    .steps li {
-      counter-increment: step;
+    .metric-icon {
+      font-size: 1.25rem;
+      margin-bottom: 0.9rem;
+      display: block;
+    }
+
+    .metric-name {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.35rem;
+    }
+
+    .metric-desc {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.5;
+      font-weight: 300;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .steps-flow {
       display: flex;
-      gap: 1rem;
-      margin-bottom: 1.25rem;
+      flex-direction: column;
+      gap: 0;
+      margin-top: 2.5rem;
+    }
+
+    .step-row {
+      display: flex;
+      gap: 1.5rem;
       align-items: flex-start;
     }
 
-    .steps li::before {
-      content: counter(step);
-      min-width: 2rem;
-      height: 2rem;
-      background: var(--accent-dim);
-      color: var(--accent);
-      border: 1px solid var(--accent);
+    .step-spine {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .step-num {
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
+      background: var(--accent-dim);
+      border: 1px solid rgba(91,138,240,0.3);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.8rem;
-      font-weight: 700;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--accent);
       flex-shrink: 0;
     }
 
-    .steps li > div { padding-top: 0.1rem; }
-
-    /* ── Roadmap ── */
-    .roadmap { list-style: none; margin-top: 0.75rem; }
-
-    .roadmap li {
-      display: flex;
-      gap: 0.75rem;
-      padding: 0.45rem 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.93rem;
-      align-items: flex-start;
+    .step-line {
+      width: 1px;
+      flex: 1;
+      min-height: 24px;
+      background: var(--border);
+      margin: 4px 0;
     }
 
-    .roadmap li:last-child { border-bottom: none; }
+    .step-content {
+      padding: 0 0 2rem 0;
+    }
 
-    .roadmap li::before {
-      content: "○";
+    .step-content:last-child { padding-bottom: 0; }
+
+    .step-title {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.35rem;
+      margin-top: 0.4rem;
+    }
+
+    .step-desc {
+      font-size: 0.88rem;
       color: var(--muted);
-      flex-shrink: 0;
-      margin-top: 0.05rem;
+      line-height: 1.6;
+      font-weight: 300;
     }
 
-    /* ── Two-column explainer ── */
+    /* ── ARCHITECTURE DIAGRAM ── */
+    .arch-wrap {
+      margin-top: 2.5rem;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2rem 1.5rem;
+      overflow-x: auto;
+    }
+
+    .arch-svg-wrap {
+      display: flex;
+      justify-content: center;
+    }
+
+    /* ── EXPLAINER ── */
     .explainer-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-      margin-top: 1rem;
+      gap: 1px;
+      margin-top: 2.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      background: var(--border);
     }
 
-    @media (max-width: 560px) {
+    @media (max-width: 600px) {
       .explainer-grid { grid-template-columns: 1fr; }
     }
 
     .explainer-card {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.1rem;
+      padding: 2rem;
     }
 
-    .explainer-card .tool-name {
+    .explainer-tool {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
       font-weight: 700;
-      font-size: 1rem;
       color: #fff;
-      margin-bottom: 0.25rem;
+      margin-bottom: 0.2rem;
     }
 
-    .explainer-card .tool-role {
-      font-size: 0.78rem;
-      font-weight: 600;
+    .explainer-role {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.07em;
+      color: var(--green);
+      margin-bottom: 0.85rem;
+    }
+
+    .explainer-card p {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.65;
+      font-weight: 300;
+    }
+
+    /* ── FEATURE GRID ── */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 0.75rem;
+      margin-top: 2.5rem;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      transition: border-color 0.2s;
+    }
+
+    .feature-card:hover { border-color: var(--border-strong); }
+
+    .feature-tag {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
       color: var(--accent);
       margin-bottom: 0.6rem;
     }
 
-    .explainer-card p {
-      font-size: 0.9rem;
+    .feature-title {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.35rem;
+    }
+
+    .feature-desc {
+      font-size: 0.82rem;
       color: var(--muted);
-      margin: 0;
       line-height: 1.55;
+      font-weight: 300;
     }
 
-    /* ── Footer ── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 1.5rem;
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.85rem;
+    /* ── CODE BLOCKS ── */
+    .code-block {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-top: 1rem;
     }
 
-    footer a { color: var(--muted); }
-    footer a:hover { color: var(--accent); }
-
-    /* ── Nav ── */
-    nav {
-      position: sticky;
-      top: 0;
-      background: rgba(15, 17, 23, 0.92);
-      backdrop-filter: blur(8px);
+    .code-header {
+      background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 0.6rem 1.5rem;
-      z-index: 100;
+      padding: 0.55rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .code-dots {
+      display: flex;
+      gap: 5px;
+    }
+
+    .code-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border-strong);
+    }
+
+    pre {
+      padding: 1.1rem 1.2rem;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.83rem;
+      line-height: 1.7;
+      color: #c5cae9;
+    }
+
+    code { font-family: var(--font-mono); }
+
+    .inline-code {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 0.1em 0.4em;
+      font-family: var(--font-mono);
+      font-size: 0.82em;
+      color: #b0b8d8;
+    }
+
+    /* ── SETUP STEPS ── */
+    .setup-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      margin-top: 2.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      background: var(--border);
+    }
+
+    .setup-step {
+      background: var(--surface);
+      padding: 1.5rem 1.75rem;
+      display: flex;
+      gap: 1.25rem;
+      align-items: flex-start;
+    }
+
+    .ss-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      border: 1px solid rgba(91,138,240,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--accent);
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+
+    .ss-title {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .ss-desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      font-weight: 300;
+    }
+
+    .ss-code {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.65rem 0.9rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: #c5cae9;
+      margin-top: 0.75rem;
       overflow-x: auto;
     }
 
-    .nav-inner {
+    /* ── PORT CARDS ── */
+    .port-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+
+    @media (max-width: 480px) {
+      .port-grid { grid-template-columns: 1fr; }
+    }
+
+    .port-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .port-service {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      margin-bottom: 0.3rem;
+    }
+
+    .port-url {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--green);
+      font-weight: 500;
+    }
+
+    /* ── PROMQL SECTION ── */
+    .promql-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 2rem;
+    }
+
+    @media (max-width: 640px) {
+      .promql-grid { grid-template-columns: 1fr; }
+    }
+
+    .metric-name-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.85rem 1.1rem;
       display: flex;
-      gap: 0.25rem;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .mnc-name {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: #b0b8d8;
+    }
+
+    .mnc-type {
+      font-family: var(--font-mono);
+      font-size: 0.67rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    /* ── LIMITATIONS ── */
+    .limitations-list {
+      margin-top: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .limitation-item {
+      display: flex;
+      gap: 0.85rem;
+      align-items: flex-start;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--yellow);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 0.85rem 1.1rem;
+    }
+
+    .limitation-item .li-icon {
+      font-size: 0.9rem;
+      flex-shrink: 0;
+      color: var(--yellow);
+      margin-top: 0.05rem;
+    }
+
+    .limitation-item .li-text {
+      font-size: 0.88rem;
+      color: var(--text);
+      font-weight: 300;
+    }
+
+    .limitation-item .li-text strong {
+      font-weight: 500;
+      color: #fff;
+    }
+
+    /* ── ROADMAP ── */
+    .roadmap-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 0.75rem;
+      margin-top: 2rem;
+    }
+
+    .roadmap-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      display: flex;
+      gap: 0.85rem;
+      align-items: flex-start;
+      transition: border-color 0.2s;
+    }
+
+    .roadmap-card:hover { border-color: var(--border-strong); }
+
+    .roadmap-card .rc-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 1px solid var(--faint);
+      flex-shrink: 0;
+      margin-top: 0.45rem;
+    }
+
+    .roadmap-card .rc-text {
+      font-size: 0.88rem;
+      color: var(--muted);
+      font-weight: 300;
+      line-height: 1.5;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+    }
+
+    .footer-inner {
       max-width: var(--max-w);
       margin: 0 auto;
-      flex-wrap: nowrap;
     }
 
-    nav a {
+    .footer-name {
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      font-weight: 600;
       color: var(--muted);
-      font-size: 0.82rem;
-      white-space: nowrap;
-      padding: 0.3rem 0.6rem;
-      border-radius: 4px;
-      transition: color 0.15s, background 0.15s;
+      margin-bottom: 0.5rem;
     }
 
-    nav a:hover {
+    .footer-links {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 0.5rem;
+    }
+
+    .footer-links a {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .footer-links a:hover { color: var(--text); }
+
+    .footer-note {
+      font-size: 0.78rem;
+      color: var(--faint);
+      margin-top: 1rem;
+    }
+
+    /* ── CALLOUT ── */
+    .callout {
+      background: var(--accent-dim);
+      border: 1px solid rgba(91,138,240,0.2);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      font-size: 0.88rem;
       color: var(--text);
+      margin-top: 1.25rem;
+      line-height: 1.6;
+      font-weight: 300;
+    }
+
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; margin-top: 1.5rem; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    th {
+      text-align: left;
+      padding: 0.7rem 1rem;
       background: var(--surface);
-      text-decoration: none;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--border);
+      font-weight: 400;
+    }
+
+    td {
+      padding: 0.7rem 1rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      color: var(--text);
+      font-weight: 300;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    td:first-child {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: #b0b8d8;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+      .hero { padding: 5rem 1.25rem 3.5rem; }
+      .section { padding: 3rem 1.25rem; }
+      .metric-grid { grid-template-columns: 1fr 1fr; }
+      .promql-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 420px) {
+      .metric-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
-<header>
-  <h1>LLM Observability Dashboard</h1>
-  <p>Track request count, latency, token usage, estimated cost, and failures across LLM providers — all in a local Prometheus + Grafana stack.</p>
-  <div class="badge-row">
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">LLM Observability</a>
+    <div class="nav-links">
+      <a href="#problem">Problem</a>
+      <a href="#tracks">Tracks</a>
+      <a href="#how">How it works</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#explainer">Primer</a>
+      <a href="#features">Features</a>
+      <a href="#setup">Setup</a>
+      <a href="#promql">PromQL</a>
+      <a href="#roadmap">Roadmap</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="top">
+  <div class="hero-eyebrow">Demo uses simulated LLM traffic</div>
+  <h1>LLM Observability<br/>Dashboard</h1>
+  <p class="hero-sub">Track request volume, latency, token usage, estimated cost, and failures across LLM providers — in a local Prometheus + Grafana stack.</p>
+  <div class="hero-ctas">
+    <a href="https://github.com/srimonchaari/llm-observability" target="_blank" rel="noopener" class="btn btn-primary">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.39.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.54-1.38-1.33-1.75-1.33-1.75-1.09-.74.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49 1 .11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4c1.02 0 2.04.14 3 .4 2.28-1.55 3.3-1.23 3.3-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.82.58A12.01 12.01 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      View GitHub Repo
+    </a>
+    <a href="#architecture" class="btn btn-ghost">
+      View Architecture
+    </a>
+  </div>
+  <p class="hero-trust">No real API keys required &mdash; all traffic is simulated locally</p>
+  <div class="badge-strip">
     <span class="badge">FastAPI</span>
     <span class="badge">Prometheus</span>
     <span class="badge">Grafana</span>
     <span class="badge">Docker Compose</span>
     <span class="badge">Python</span>
   </div>
-</header>
+</section>
 
-<nav>
-  <div class="nav-inner">
-    <a href="#what">What</a>
-    <a href="#why">Why</a>
-    <a href="#how">How it works</a>
-    <a href="#architecture">Architecture</a>
-    <a href="#metrics">Metrics</a>
-    <a href="#explainer">Prometheus &amp; Grafana</a>
-    <a href="#setup">Setup</a>
-    <a href="#roadmap">Roadmap</a>
+<!-- PROBLEM -->
+<section class="section" id="problem">
+  <div class="section-label">The Problem</div>
+  <h2 class="section-title">LLM APIs are opaque by default</h2>
+  <p class="section-sub">You send a prompt, get a response, and that's it. No cost breakdown, no latency percentiles, no failure rate — especially across multiple providers or models. Production systems need more than that.</p>
+  <div class="problem-grid">
+    <div class="problem-item">
+      <div class="pi-label">Blind spot</div>
+      <div class="pi-problem">No cost visibility</div>
+      <div class="pi-fix">Tracks estimated USD cost per request, broken down by model</div>
+    </div>
+    <div class="problem-item">
+      <div class="pi-label">Blind spot</div>
+      <div class="pi-problem">No latency tracking</div>
+      <div class="pi-fix">Records p50 / p95 / p99 via Prometheus histograms</div>
+    </div>
+    <div class="problem-item">
+      <div class="pi-label">Blind spot</div>
+      <div class="pi-problem">Failures go unnoticed</div>
+      <div class="pi-fix">Counts errors and surfaces error rate in dashboards</div>
+    </div>
+    <div class="problem-item">
+      <div class="pi-label">Blind spot</div>
+      <div class="pi-problem">Token usage invisible</div>
+      <div class="pi-fix">Tracks input and output tokens separately per request</div>
+    </div>
+    <div class="problem-item">
+      <div class="pi-label">Blind spot</div>
+      <div class="pi-problem">Hard to compare models</div>
+      <div class="pi-fix">All metrics labeled by provider, model, endpoint, and feature</div>
+    </div>
+    <div class="problem-item">
+      <div class="pi-label">Blind spot</div>
+      <div class="pi-problem">No alerting foundation</div>
+      <div class="pi-fix">Prometheus data model works directly with alerting rules</div>
+    </div>
   </div>
-</nav>
+</section>
 
-<main>
+<!-- WHAT IT TRACKS -->
+<section class="section" id="tracks">
+  <div class="section-label">What it tracks</div>
+  <h2 class="section-title">Six metrics that matter</h2>
+  <p class="section-sub">Everything is labeled consistently so you can slice and compare across providers, models, and product features.</p>
+  <div class="metric-grid">
+    <div class="metric-card">
+      <span class="metric-icon">📊</span>
+      <div class="metric-name">Request Volume</div>
+      <div class="metric-desc">Total requests processed, broken down by provider, model, feature, and status.</div>
+    </div>
+    <div class="metric-card">
+      <span class="metric-icon">⏱</span>
+      <div class="metric-name">Latency</div>
+      <div class="metric-desc">Full histogram: p50, p95, and p99 per model. See which providers are slow.</div>
+    </div>
+    <div class="metric-card">
+      <span class="metric-icon">📥</span>
+      <div class="metric-name">Input Tokens</div>
+      <div class="metric-desc">Total prompt tokens consumed. Input cost is usually the larger driver.</div>
+    </div>
+    <div class="metric-card">
+      <span class="metric-icon">📤</span>
+      <div class="metric-name">Output Tokens</div>
+      <div class="metric-desc">Total completion tokens generated. Helps understand actual model output behaviour.</div>
+    </div>
+    <div class="metric-card">
+      <span class="metric-icon">💵</span>
+      <div class="metric-name">Estimated Cost</div>
+      <div class="metric-desc">Approximated USD spend per request based on hardcoded per-1K token pricing. Not billing-grade.</div>
+    </div>
+    <div class="metric-card">
+      <span class="metric-icon">🔴</span>
+      <div class="metric-name">Failures</div>
+      <div class="metric-desc">Error counter + error rate panel. Simulator injects ~8% failure rate so the panel has data.</div>
+    </div>
+  </div>
+</section>
 
-  <!-- WHAT -->
-  <section id="what">
-    <h2>What is this project?</h2>
-    <p>
-      LLM Observability Dashboard is a demo observability stack for LLM-backed APIs.
-      It wraps a FastAPI app with Prometheus metrics and ships a prebuilt Grafana dashboard
-      that visualizes those metrics in real time.
-    </p>
-    <p>
-      The app uses a local simulator — no real LLM API keys are needed. You get a working
-      metrics pipeline out of the box: send requests, watch counters and histograms update,
-      and explore the Grafana dashboard.
-    </p>
-    <div class="card-grid">
-      <div class="card">
-        <div class="card-label">Backend</div>
-        <div class="card-value">FastAPI (Python)</div>
+<!-- HOW IT WORKS -->
+<section class="section" id="how">
+  <div class="section-label">How it works</div>
+  <h2 class="section-title">Five steps, no magic</h2>
+  <p class="section-sub">The full data path from HTTP request to Grafana panel.</p>
+  <div class="steps-flow">
+    <div class="step-row">
+      <div class="step-spine">
+        <div class="step-num">01</div>
+        <div class="step-line"></div>
       </div>
-      <div class="card">
-        <div class="card-label">Metrics store</div>
-        <div class="card-value">Prometheus</div>
-      </div>
-      <div class="card">
-        <div class="card-label">Visualization</div>
-        <div class="card-value">Grafana</div>
-      </div>
-      <div class="card">
-        <div class="card-label">Deployment</div>
-        <div class="card-value">Docker Compose</div>
-      </div>
-      <div class="card">
-        <div class="card-label">Data source</div>
-        <div class="card-value">Simulated traffic</div>
-      </div>
-      <div class="card">
-        <div class="card-label">Setup time</div>
-        <div class="card-value">~2 minutes</div>
+      <div class="step-content">
+        <div class="step-title">Request hits FastAPI</div>
+        <div class="step-desc">A client sends <span class="inline-code">POST /chat</span> with a provider, model, feature, and prompt payload.</div>
       </div>
     </div>
-  </section>
-
-  <!-- WHY -->
-  <section id="why">
-    <h2>Why it was built</h2>
-    <p>
-      LLM APIs are opaque by default. You send a prompt and get a response,
-      but there's no built-in visibility into cost, latency, or failure rate —
-      especially across multiple providers or models.
-    </p>
-    <p>
-      This project shows how to instrument an LLM API the same way you'd
-      instrument any production service. The patterns here — metrics, labels,
-      dashboards, PromQL queries — apply directly to real deployments.
-    </p>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Problem</th>
-            <th>This project</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td>No cost visibility</td><td>Tracks estimated USD cost per request, by model</td></tr>
-          <tr><td>No latency tracking</td><td>Records p50/p95/p99 via histogram</td></tr>
-          <tr><td>Failures go unnoticed</td><td>Counts errors, computes error rate</td></tr>
-          <tr><td>Token usage invisible</td><td>Tracks input and output tokens separately</td></tr>
-          <tr><td>Hard to compare models</td><td>All metrics labeled by provider and model</td></tr>
-        </tbody>
-      </table>
+    <div class="step-row">
+      <div class="step-spine">
+        <div class="step-num">02</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-content">
+        <div class="step-title">Simulator generates realistic output</div>
+        <div class="step-desc"><span class="inline-code">FakeLLMSimulator.generate()</span> produces realistic latency variance, token counts, and occasional errors — without touching a real LLM API. No keys required.</div>
+      </div>
     </div>
-  </section>
-
-  <!-- HOW -->
-  <section id="how">
-    <h2>How it works</h2>
-    <ol style="padding-left: 1.25rem; color: var(--text); line-height: 2;">
-      <li>A request hits the FastAPI <span class="inline-code">POST /chat</span> endpoint.</li>
-      <li>The app calls <span class="inline-code">FakeLLMSimulator.generate()</span>, which produces realistic latency, token counts, and occasional failures — without making real API calls.</li>
-      <li>The app records Prometheus metrics using consistent labels (<span class="inline-code">provider</span>, <span class="inline-code">model</span>, <span class="inline-code">endpoint</span>, <span class="inline-code">feature</span>, <span class="inline-code">status</span>).</li>
-      <li>Prometheus scrapes <span class="inline-code">/metrics</span> every 5 seconds and stores the time series.</li>
-      <li>Grafana reads Prometheus and renders the prebuilt dashboard.</li>
-    </ol>
-    <div class="callout">
-      <p>The simulator injects an 8% failure rate so error-rate panels in the dashboard have something to show.</p>
+    <div class="step-row">
+      <div class="step-spine">
+        <div class="step-num">03</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-content">
+        <div class="step-title">Metrics recorded with labels</div>
+        <div class="step-desc">The app updates Prometheus counters and histograms, tagging each with <span class="inline-code">provider</span>, <span class="inline-code">model</span>, <span class="inline-code">endpoint</span>, <span class="inline-code">feature</span>, and <span class="inline-code">status</span>.</div>
+      </div>
     </div>
-  </section>
-
-  <!-- ARCHITECTURE -->
-  <section id="architecture">
-    <h2>Architecture</h2>
-    <div class="arch-box">
-      <span class="hi">HTTP Request</span><br>
-      &nbsp;&nbsp;&nbsp;&nbsp;│<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;▼<br>
-      <span class="hi">FastAPI</span> <span class="dim">(port 8000)</span><br>
-      &nbsp;&nbsp;├── /chat &nbsp;&nbsp;&nbsp; <span class="dim">→ runs simulator, records metrics</span><br>
-      &nbsp;&nbsp;├── /health &nbsp;&nbsp;<span class="dim">→ health check</span><br>
-      &nbsp;&nbsp;└── /metrics &nbsp;<span class="dim">→ Prometheus scrape endpoint</span><br>
-      &nbsp;&nbsp;&nbsp;&nbsp;│<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;▼<br>
-      <span class="ok">Prometheus</span> <span class="dim">(port 9090) — scrapes every 5s</span><br>
-      &nbsp;&nbsp;&nbsp;&nbsp;│<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;▼<br>
-      <span class="ok">Grafana</span> <span class="dim">(port 3000) — prebuilt dashboard, auto-provisioned</span>
+    <div class="step-row">
+      <div class="step-spine">
+        <div class="step-num">04</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-content">
+        <div class="step-title">Prometheus scrapes /metrics every 5 seconds</div>
+        <div class="step-desc">Prometheus polls the <span class="inline-code">/metrics</span> endpoint and stores each data point as a labeled time series.</div>
+      </div>
     </div>
-    <p style="margin-top: 1rem;">All three services are wired together via Docker Compose. No manual configuration needed.</p>
-  </section>
-
-  <!-- METRICS -->
-  <section id="metrics">
-    <h2>Key metrics tracked</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Metric</th>
-            <th>Type</th>
-            <th>Description</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>llm_requests_total</code></td>
-            <td>Counter</td>
-            <td>Total requests processed</td>
-          </tr>
-          <tr>
-            <td><code>llm_errors_total</code></td>
-            <td>Counter</td>
-            <td>Total failed requests</td>
-          </tr>
-          <tr>
-            <td><code>llm_input_tokens_total</code></td>
-            <td>Counter</td>
-            <td>Total input tokens consumed</td>
-          </tr>
-          <tr>
-            <td><code>llm_output_tokens_total</code></td>
-            <td>Counter</td>
-            <td>Total output tokens generated</td>
-          </tr>
-          <tr>
-            <td><code>llm_estimated_cost_usd_total</code></td>
-            <td>Counter</td>
-            <td>Cumulative estimated cost (USD)</td>
-          </tr>
-          <tr>
-            <td><code>llm_request_latency_seconds</code></td>
-            <td>Histogram</td>
-            <td>Request latency (buckets: 50ms–21s)</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="step-row">
+      <div class="step-spine">
+        <div class="step-num">05</div>
+      </div>
+      <div class="step-content">
+        <div class="step-title">Grafana renders the dashboard</div>
+        <div class="step-desc">Grafana queries Prometheus using PromQL and renders the prebuilt <em>LLM Cost + Latency Monitor</em> dashboard. Auto-provisioned — open it immediately after startup.</div>
+      </div>
     </div>
-    <p style="margin-top: 0.75rem;">All metrics include labels: <span class="inline-code">provider</span>, <span class="inline-code">model</span>, <span class="inline-code">endpoint</span>, <span class="inline-code">feature</span>, <span class="inline-code">status</span>.</p>
+  </div>
+</section>
 
-    <h3>Sample PromQL queries</h3>
-    <p>Error rate:</p>
-    <pre><code>sum(rate(llm_errors_total[5m])) / sum(rate(llm_requests_total[5m]))</code></pre>
-    <p>p95 latency by model:</p>
+<!-- ARCHITECTURE -->
+<section class="section" id="architecture">
+  <div class="section-label">Architecture</div>
+  <h2 class="section-title">How the pieces connect</h2>
+  <p class="section-sub">Three services wired together by Docker Compose. No manual configuration needed.</p>
+  <div class="arch-wrap">
+    <div class="arch-svg-wrap">
+      <svg viewBox="0 0 820 380" width="100%" style="max-width:820px;min-width:320px;" xmlns="http://www.w3.org/2000/svg" font-family="'DM Mono', 'Fira Code', monospace">
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#4b5280"/>
+          </marker>
+          <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#5b8af0"/>
+          </marker>
+          <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#3ecf8e"/>
+          </marker>
+        </defs>
+
+        <!-- Background subtle grid -->
+        <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+          <path d="M 24 0 L 0 0 0 24" fill="none" stroke="rgba(255,255,255,0.02)" stroke-width="0.5"/>
+        </pattern>
+        <rect width="820" height="380" fill="url(#grid)" rx="8"/>
+
+        <!-- Client box -->
+        <rect x="30" y="150" width="130" height="60" rx="6" fill="#13151d" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <text x="95" y="175" text-anchor="middle" fill="#8b8fa8" font-size="9" letter-spacing="1" text-transform="uppercase">USER / CLIENT</text>
+        <text x="95" y="193" text-anchor="middle" fill="#dde0ec" font-size="11" font-weight="500">HTTP Request</text>
+
+        <!-- Arrow: Client -> FastAPI -->
+        <line x1="161" y1="180" x2="213" y2="180" stroke="#5b8af0" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+        <text x="187" y="172" text-anchor="middle" fill="#5b8af0" font-size="8.5" letter-spacing="0.5">POST /chat</text>
+
+        <!-- FastAPI box -->
+        <rect x="215" y="100" width="180" height="160" rx="6" fill="#13151d" stroke="#5b8af0" stroke-width="1.5"/>
+        <text x="305" y="124" text-anchor="middle" fill="#5b8af0" font-size="9" letter-spacing="1">FASTAPI  :8000</text>
+        <line x1="230" y1="130" x2="380" y2="130" stroke="rgba(91,138,240,0.2)" stroke-width="1"/>
+
+        <rect x="232" y="140" width="146" height="24" rx="4" fill="#0e1016"/>
+        <text x="305" y="156" text-anchor="middle" fill="#c5cae9" font-size="10">POST /chat</text>
+
+        <rect x="232" y="172" width="146" height="24" rx="4" fill="#0e1016"/>
+        <text x="305" y="188" text-anchor="middle" fill="#c5cae9" font-size="10">GET /health</text>
+
+        <rect x="232" y="204" width="146" height="24" rx="4" fill="rgba(62,207,142,0.08)" stroke="rgba(62,207,142,0.2)" stroke-width="1"/>
+        <text x="305" y="220" text-anchor="middle" fill="#3ecf8e" font-size="10">GET /metrics</text>
+
+        <!-- Simulator label -->
+        <text x="305" y="246" text-anchor="middle" fill="#6b7094" font-size="8.5" font-style="italic">FakeLLMSimulator</text>
+
+        <!-- Arrow: /metrics -> Prometheus -->
+        <line x1="396" y1="216" x2="450" y2="216" stroke="#3ecf8e" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+        <text x="423" y="207" text-anchor="middle" fill="#3ecf8e" font-size="8" letter-spacing="0.3">scrape ×5s</text>
+
+        <!-- Prometheus box -->
+        <rect x="452" y="150" width="160" height="80" rx="6" fill="#13151d" stroke="#3ecf8e" stroke-width="1.5"/>
+        <text x="532" y="174" text-anchor="middle" fill="#3ecf8e" font-size="9" letter-spacing="1">PROMETHEUS :9090</text>
+        <line x1="467" y1="180" x2="597" y2="180" stroke="rgba(62,207,142,0.2)" stroke-width="1"/>
+        <text x="532" y="200" text-anchor="middle" fill="#8b8fa8" font-size="9">Time series storage</text>
+        <text x="532" y="218" text-anchor="middle" fill="#8b8fa8" font-size="9">PromQL query engine</text>
+
+        <!-- Arrow: Prometheus -> Grafana -->
+        <line x1="612" y1="190" x2="650" y2="190" stroke="#3ecf8e" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+        <text x="631" y="181" text-anchor="middle" fill="#6b7094" font-size="8">reads</text>
+
+        <!-- Grafana box -->
+        <rect x="652" y="148" width="145" height="84" rx="6" fill="#13151d" stroke="rgba(240,180,41,0.6)" stroke-width="1.5"/>
+        <text x="724" y="172" text-anchor="middle" fill="#f0b429" font-size="9" letter-spacing="1">GRAFANA  :3000</text>
+        <line x1="667" y1="178" x2="782" y2="178" stroke="rgba(240,180,41,0.15)" stroke-width="1"/>
+        <text x="724" y="200" text-anchor="middle" fill="#8b8fa8" font-size="9">Auto-provisioned</text>
+        <text x="724" y="218" text-anchor="middle" fill="#8b8fa8" font-size="9">dashboard</text>
+
+        <!-- Docker Compose bracket -->
+        <rect x="210" y="320" width="595" height="28" rx="4" fill="rgba(91,138,240,0.05)" stroke="rgba(91,138,240,0.15)" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="507" y="339" text-anchor="middle" fill="#4b5280" font-size="9" letter-spacing="0.5">docker compose — all services wired automatically</text>
+
+        <!-- Vertical lines from boxes to bracket -->
+        <line x1="305" y1="261" x2="305" y2="320" stroke="rgba(91,138,240,0.1)" stroke-width="1" stroke-dasharray="3,3"/>
+        <line x1="532" y1="231" x2="532" y2="320" stroke="rgba(91,138,240,0.1)" stroke-width="1" stroke-dasharray="3,3"/>
+        <line x1="724" y1="233" x2="724" y2="320" stroke="rgba(91,138,240,0.1)" stroke-width="1" stroke-dasharray="3,3"/>
+
+        <!-- Demo traffic label -->
+        <text x="95" y="260" text-anchor="middle" fill="#3a3e55" font-size="8.5" font-style="italic">simulated traffic</text>
+        <text x="95" y="273" text-anchor="middle" fill="#3a3e55" font-size="8.5" font-style="italic">no real API keys</text>
+      </svg>
+    </div>
+  </div>
+  <p style="margin-top:1.25rem; font-size:0.85rem; color:var(--muted); font-weight:300;">The <span class="inline-code">POST /chat</span> endpoint runs the simulator and records metrics. <span class="inline-code">GET /metrics</span> exposes them to Prometheus. Grafana reads Prometheus. All three start with one command.</p>
+</section>
+
+<!-- PROMETHEUS & GRAFANA EXPLAINER -->
+<section class="section" id="explainer">
+  <div class="section-label">Beginner primer</div>
+  <h2 class="section-title">What Prometheus and Grafana actually do</h2>
+  <p class="section-sub">If you haven't used these before, here's the plain-English version.</p>
+  <div class="explainer-grid">
+    <div class="explainer-card">
+      <div class="explainer-tool">Prometheus</div>
+      <div class="explainer-role">Metrics collection & storage</div>
+      <p>Your app exposes a <code>/metrics</code> endpoint that returns numbers in a specific text format. Prometheus polls that endpoint on a schedule — every 5 seconds here — and stores each value as a time series: metric name, labels, value, timestamp.</p>
+      <p style="margin-top:0.7rem;">It also gives you PromQL, a query language for computing rates, percentiles, and aggregations over stored data. That's how you ask "what was the p95 latency for model X over the last 5 minutes?"</p>
+    </div>
+    <div class="explainer-card">
+      <div class="explainer-tool">Grafana</div>
+      <div class="explainer-role">Visualization</div>
+      <p>Grafana connects to Prometheus as a data source. You write PromQL queries, and Grafana turns the results into charts and dashboards. It doesn't store any data itself — it reads from Prometheus and renders it.</p>
+      <p style="margin-top:0.7rem;">In this project the dashboard is pre-built and auto-provisioned, so you open Grafana and it's already configured. No setup required after <span class="inline-code">docker compose up</span>.</p>
+    </div>
+  </div>
+  <div class="callout">
+    <strong style="color:#fff;">In this project:</strong> FastAPI exposes <span class="inline-code">/metrics</span> → Prometheus scrapes it every 5s and stores the time series → Grafana queries Prometheus with PromQL → you see a live dashboard. Docker Compose wires all three together automatically.
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <div class="section-label">Feature highlights</div>
+  <h2 class="section-title">What's included</h2>
+  <p class="section-sub">Everything needed for a functional local observability stack, no cloud accounts required.</p>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-tag">Backend</div>
+      <div class="feature-title">FastAPI app</div>
+      <div class="feature-desc">Python backend with /chat, /health, and /metrics endpoints. Async, typed, easy to extend.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-tag">Observability</div>
+      <div class="feature-title">Prometheus metrics endpoint</div>
+      <div class="feature-desc">Six labeled metrics covering requests, errors, latency, tokens, and cost. Scrape-ready.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-tag">Visualization</div>
+      <div class="feature-title">Prebuilt Grafana dashboard</div>
+      <div class="feature-desc">Auto-provisioned on startup. Open localhost:3000 and the dashboard is already there.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-tag">Infrastructure</div>
+      <div class="feature-title">Docker Compose stack</div>
+      <div class="feature-desc">One command starts FastAPI, Prometheus, and Grafana with correct networking and volume mounts.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-tag">Analytics</div>
+      <div class="feature-title">Label-based breakdowns</div>
+      <div class="feature-desc">Every metric is labeled by provider, model, feature, endpoint, and status. Filter and compare anything.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-tag">Developer experience</div>
+      <div class="feature-title">Zero real credentials needed</div>
+      <div class="feature-desc">Simulator handles everything locally. Works offline. Ideal for learning observability patterns.</div>
+    </div>
+  </div>
+</section>
+
+<!-- SETUP -->
+<section class="section" id="setup">
+  <div class="section-label">Quick start</div>
+  <h2 class="section-title">Up and running in ~2 minutes</h2>
+  <p class="section-sub">You need Docker with Compose. That's it.</p>
+  <div class="setup-steps">
+    <div class="setup-step">
+      <div class="ss-num">1</div>
+      <div>
+        <div class="ss-title">Clone the repo</div>
+        <div class="ss-code">git clone https://github.com/srimonchaari/llm-observability.git<br>cd llm-observability</div>
+      </div>
+    </div>
+    <div class="setup-step">
+      <div class="ss-num">2</div>
+      <div>
+        <div class="ss-title">Start all services</div>
+        <div class="ss-code">docker compose up --build</div>
+        <div class="ss-desc" style="margin-top:0.5rem;">Starts FastAPI on :8000, Prometheus on :9090, and Grafana on :3000.</div>
+      </div>
+    </div>
+    <div class="setup-step">
+      <div class="ss-num">3</div>
+      <div>
+        <div class="ss-title">Send a request</div>
+        <div class="ss-code">curl -X POST http://localhost:8000/chat \<br>&nbsp;&nbsp;-H "Content-Type: application/json" \<br>&nbsp;&nbsp;-d '{<br>&nbsp;&nbsp;&nbsp;&nbsp;"provider": "openai",<br>&nbsp;&nbsp;&nbsp;&nbsp;"model": "gpt-4o-mini",<br>&nbsp;&nbsp;&nbsp;&nbsp;"feature": "support-bot",<br>&nbsp;&nbsp;&nbsp;&nbsp;"endpoint": "/chat",<br>&nbsp;&nbsp;&nbsp;&nbsp;"prompt": "Summarize customer issues",<br>&nbsp;&nbsp;&nbsp;&nbsp;"max_output_tokens": 120<br>&nbsp;&nbsp;}'</div>
+      </div>
+    </div>
+    <div class="setup-step">
+      <div class="ss-num">4</div>
+      <div>
+        <div class="ss-title">Open Grafana</div>
+        <div class="ss-desc">Go to <span class="inline-code">http://localhost:3000</span>, log in with <span class="inline-code">admin / admin</span>, and open the <em>LLM Cost + Latency Monitor</em> dashboard. It's already provisioned.</div>
+      </div>
+    </div>
+  </div>
+  <div class="port-grid">
+    <div class="port-card">
+      <div class="port-service">FastAPI</div>
+      <div class="port-url">localhost:8000</div>
+    </div>
+    <div class="port-card">
+      <div class="port-service">Prometheus</div>
+      <div class="port-url">localhost:9090</div>
+    </div>
+    <div class="port-card">
+      <div class="port-service">Grafana</div>
+      <div class="port-url">localhost:3000</div>
+    </div>
+  </div>
+</section>
+
+<!-- METRICS & PROMQL -->
+<section class="section" id="promql">
+  <div class="section-label">Metrics & PromQL</div>
+  <h2 class="section-title">What gets exposed</h2>
+  <p class="section-sub">Six Prometheus metrics. All labeled by provider, model, endpoint, feature, and status.</p>
+
+  <div class="promql-grid">
+    <div class="metric-name-card"><span class="mnc-name">llm_requests_total</span><span class="mnc-type">counter</span></div>
+    <div class="metric-name-card"><span class="mnc-name">llm_errors_total</span><span class="mnc-type">counter</span></div>
+    <div class="metric-name-card"><span class="mnc-name">llm_input_tokens_total</span><span class="mnc-type">counter</span></div>
+    <div class="metric-name-card"><span class="mnc-name">llm_output_tokens_total</span><span class="mnc-type">counter</span></div>
+    <div class="metric-name-card"><span class="mnc-name">llm_estimated_cost_usd_total</span><span class="mnc-type">counter</span></div>
+    <div class="metric-name-card"><span class="mnc-name">llm_request_latency_seconds</span><span class="mnc-type">histogram</span></div>
+  </div>
+
+  <h3 style="font-family:var(--font-display); font-size:1rem; font-weight:600; color:#fff; margin:2rem 0 0.75rem;">Sample PromQL queries</h3>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+      Error rate (5-minute window)
+    </div>
+    <pre><code>sum(rate(llm_errors_total[5m]))
+  /
+sum(rate(llm_requests_total[5m]))</code></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+      p95 latency by model
+    </div>
     <pre><code>histogram_quantile(0.95,
   sum(rate(llm_request_latency_seconds_bucket[5m])) by (le, model)
 )</code></pre>
-    <p>Estimated cost rate by model:</p>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+      Estimated cost rate by model
+    </div>
     <pre><code>sum by (model) (rate(llm_estimated_cost_usd_total[5m]))</code></pre>
-  </section>
+  </div>
+</section>
 
-  <!-- EXPLAINER -->
-  <section id="explainer">
-    <h2>Prometheus &amp; Grafana — plain English</h2>
-    <p>If you haven't used these tools before:</p>
-    <div class="explainer-grid">
-      <div class="explainer-card">
-        <div class="tool-name">Prometheus</div>
-        <div class="tool-role">Metrics collection &amp; storage</div>
-        <p>Your app exposes a <code>/metrics</code> endpoint with numbers. Prometheus scrapes that endpoint on a schedule and stores each value as a time series — metric name, labels, value, timestamp. It also has a query language (PromQL) for aggregations like rates and percentiles.</p>
-      </div>
-      <div class="explainer-card">
-        <div class="tool-name">Grafana</div>
-        <div class="tool-role">Visualization</div>
-        <p>Grafana connects to Prometheus as a data source. You write PromQL queries, and Grafana turns the results into charts, graphs, and dashboards. It doesn't store any data itself — it just reads from Prometheus and renders it.</p>
-      </div>
+<!-- LIMITATIONS -->
+<section class="section" id="limitations">
+  <div class="section-label">Limitations</div>
+  <h2 class="section-title">What this isn't</h2>
+  <p class="section-sub">This is a v1 demo. Here's what you should know before plugging it into anything serious.</p>
+  <div class="limitations-list">
+    <div class="limitation-item">
+      <div class="li-icon">⚠</div>
+      <div class="li-text"><strong>Simulated traffic only.</strong> No real LLM API calls are made. The simulator produces realistic-looking numbers but they don't correspond to actual provider behaviour.</div>
     </div>
-    <div class="callout" style="margin-top: 1.25rem;">
-      <p><strong>In this project:</strong> FastAPI exposes <span class="inline-code">/metrics</span> → Prometheus scrapes it every 5s → Grafana reads Prometheus → you see a live dashboard. Docker Compose wires all three services together automatically.</p>
+    <div class="limitation-item">
+      <div class="li-icon">⚠</div>
+      <div class="li-text"><strong>Cost is estimated, not exact.</strong> Pricing is hardcoded per-1K token rates. Real provider pricing changes, varies by tier, and includes factors this doesn't model.</div>
     </div>
-  </section>
-
-  <!-- SETUP -->
-  <section id="setup">
-    <h2>Setup</h2>
-    <p>Requirements: <a href="https://docs.docker.com/get-docker/" target="_blank" rel="noopener">Docker</a> with Compose.</p>
-    <ol class="steps">
-      <li>
-        <div>
-          <strong>Clone the repo</strong>
-          <pre><code>git clone https://github.com/srimonchaari/llm-observability.git
-cd llm-observability</code></pre>
-        </div>
-      </li>
-      <li>
-        <div>
-          <strong>Start all services</strong>
-          <pre><code>docker compose up --build</code></pre>
-        </div>
-      </li>
-      <li>
-        <div>
-          <strong>Send a request</strong>
-          <pre><code>curl -X POST http://localhost:8000/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "provider": "openai",
-    "model": "gpt-4o-mini",
-    "feature": "support-bot",
-    "endpoint": "/chat",
-    "prompt": "Summarize customer issues",
-    "max_output_tokens": 120
-  }'</code></pre>
-        </div>
-      </li>
-      <li>
-        <div>
-          <strong>Open Grafana</strong>
-          <p>Go to <span class="inline-code">http://localhost:3000</span>, log in with <span class="inline-code">admin / admin</span>, and open the <em>LLM Cost + Latency Monitor</em> dashboard.</p>
-        </div>
-      </li>
-    </ol>
-    <div class="card-grid" style="margin-top: 0.5rem;">
-      <div class="card">
-        <div class="card-label">FastAPI</div>
-        <div class="card-value">http://localhost:8000</div>
-      </div>
-      <div class="card">
-        <div class="card-label">Prometheus</div>
-        <div class="card-value">http://localhost:9090</div>
-      </div>
-      <div class="card">
-        <div class="card-label">Grafana</div>
-        <div class="card-value">http://localhost:3000</div>
-      </div>
+    <div class="limitation-item">
+      <div class="li-icon">⚠</div>
+      <div class="li-text"><strong>Not billing-grade.</strong> Token counts are approximated from word count, not a real tokenizer. Do not use these numbers for invoicing or cost attribution.</div>
     </div>
-    <div class="callout warning" style="margin-top: 1.25rem;">
-      <p><strong>Note:</strong> Cost figures are estimates based on hardcoded per-1K token pricing. Token counts are approximated from word count, not a real tokenizer. Do not use these numbers for billing.</p>
+    <div class="limitation-item">
+      <div class="li-icon">⚠</div>
+      <div class="li-text"><strong>No authentication.</strong> Grafana runs with default credentials. Prometheus has no access control. This is a local dev stack, not a production deployment.</div>
     </div>
-  </section>
+    <div class="limitation-item">
+      <div class="li-icon">⚠</div>
+      <div class="li-text"><strong>v1 scope.</strong> No structured logging, no distributed tracing, no alerting rules, no per-tenant labels. These are planned for v2.</div>
+    </div>
+  </div>
+</section>
 
-  <!-- ROADMAP -->
-  <section id="roadmap">
-    <h2>Roadmap</h2>
-    <ul class="roadmap">
-      <li>Real provider integrations — OpenAI, Anthropic, Gemini</li>
-      <li>Automatic middleware to track all endpoints without per-route code</li>
-      <li>Structured logging with request IDs</li>
-      <li>Distributed tracing via OpenTelemetry</li>
-      <li>Prometheus alerting rules for cost spikes and latency regressions</li>
-      <li>Per-tenant or per-project metric labels</li>
-      <li>Daily cost rollups and budget threshold alerts</li>
-      <li>Load testing scripts for sustained traffic simulation</li>
-      <li>Unit and integration test coverage</li>
-    </ul>
-  </section>
+<!-- ROADMAP -->
+<section class="section" id="roadmap">
+  <div class="section-label">Roadmap</div>
+  <h2 class="section-title">What's coming in v2</h2>
+  <p class="section-sub">Ideas in roughly priority order.</p>
+  <div class="roadmap-grid">
+    <div class="roadmap-card">
+      <div class="rc-dot"></div>
+      <div class="rc-text">Real provider integrations — OpenAI, Anthropic, Gemini</div>
+    </div>
+    <div class="roadmap-card">
+      <div class="rc-dot"></div>
+      <div class="rc-text">Automatic middleware to instrument all endpoints without per-route code</div>
+    </div>
+    <div class="roadmap-card">
+      <div class="rc-dot"></div>
+      <div class="rc-text">Structured logging with request IDs for trace correlation</div>
+    </div>
+    <div class="roadmap-card">
+      <div class="rc-dot"></div>
+      <div class="rc-text">Distributed tracing via OpenTelemetry</div>
+    </div>
+    <div class="roadmap-card">
+      <div class="rc-dot"></div>
+      <div class="rc-text">Prometheus alerting rules for cost spikes and latency regressions</div>
+    </div>
+    <div class="roadmap-card">
+      <div class="rc-dot"></div>
+      <div class="rc-text">Per-tenant and per-project metric labels</div>
+    </div>
+    <div class="roadmap-card">
+      <div class="rc-dot"></div>
+      <div class="rc-text">Daily cost rollups and budget threshold alerts</div>
+    </div>
+    <div class="roadmap-card">
+      <div class="rc-dot"></div>
+      <div class="rc-text">Load testing scripts for sustained traffic simulation</div>
+    </div>
+    <div class="roadmap-card">
+      <div class="rc-dot"></div>
+      <div class="rc-text">Unit and integration test coverage</div>
+    </div>
+  </div>
+</section>
 
-</main>
-
+<!-- FOOTER -->
 <footer>
-  <p>
-    <a href="https://github.com/srimonchaari/llm-observability" target="_blank" rel="noopener">GitHub</a>
-    &nbsp;·&nbsp;
-    Built with FastAPI, Prometheus, and Grafana
-  </p>
+  <div class="footer-inner">
+    <div class="footer-name">LLM Observability Dashboard</div>
+    <div class="footer-links">
+      <a href="https://github.com/srimonchaari/llm-observability" target="_blank" rel="noopener">GitHub</a>
+      <a href="#top">Back to top</a>
+    </div>
+    <p class="footer-note">Built with FastAPI, Prometheus, and Grafana. Demo uses simulated traffic only.</p>
+  </div>
 </footer>
+
+<script>
+  // Minimal smooth scroll polyfill for browsers that don't support CSS scroll-behavior
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const id = a.getAttribute('href').slice(1);
+      if (!id) return;
+      const el = document.getElementById(id);
+      if (el) {
+        e.preventDefault();
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+</script>
 
 </body>
 </html>
