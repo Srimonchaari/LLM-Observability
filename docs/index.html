@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LLM Observability Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2a2d3a;
+      --text: #e2e4ed;
+      --muted: #8b8fa8;
+      --accent: #6c8ef7;
+      --accent-dim: #1e2640;
+      --green: #4ade80;
+      --red: #f87171;
+      --yellow: #fbbf24;
+      --code-bg: #12141e;
+      --radius: 8px;
+      --max-w: 860px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 16px;
+      line-height: 1.65;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Layout ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 2.5rem 1.5rem 2rem;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 1.05rem;
+      max-width: 560px;
+      margin: 0 auto 1.25rem;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+
+    .badge {
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 0.25rem 0.7rem;
+      border-radius: 999px;
+      border: 1px solid var(--accent);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    main {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 4rem;
+    }
+
+    section { margin-bottom: 3.5rem; }
+
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 1rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 1.25rem 0 0.5rem;
+    }
+
+    p { margin-bottom: 0.75rem; color: var(--text); }
+    p:last-child { margin-bottom: 0; }
+
+    /* ── Cards ── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.1rem;
+    }
+
+    .card-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 0.3rem;
+    }
+
+    .card-value {
+      font-size: 0.95rem;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* ── Table ── */
+    .table-wrap { overflow-x: auto; margin-top: 1rem; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th {
+      text-align: left;
+      padding: 0.6rem 0.8rem;
+      background: var(--surface);
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 0.6rem 0.8rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    /* ── Code ── */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.1rem;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      margin: 1rem 0;
+    }
+
+    code {
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      color: #c9d1d9;
+    }
+
+    pre code { color: inherit; }
+
+    .inline-code {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.1em 0.4em;
+      font-size: 0.85em;
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      color: #c9d1d9;
+    }
+
+    /* ── Architecture diagram ── */
+    .arch-box {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      font-size: 0.82rem;
+      line-height: 1.9;
+      color: #c9d1d9;
+      overflow-x: auto;
+      margin-top: 1rem;
+    }
+
+    .arch-box .dim { color: var(--muted); }
+    .arch-box .hi  { color: var(--accent); font-weight: 600; }
+    .arch-box .ok  { color: var(--green); }
+
+    /* ── Callout boxes ── */
+    .callout {
+      background: var(--surface);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 1rem 1.1rem;
+      margin: 1.25rem 0;
+      font-size: 0.95rem;
+    }
+
+    .callout p { margin: 0; }
+
+    .callout.warning { border-left-color: var(--yellow); }
+    .callout.warning p { color: var(--text); }
+
+    /* ── Setup steps ── */
+    .steps { list-style: none; counter-reset: step; margin-top: 1rem; }
+
+    .steps li {
+      counter-increment: step;
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      align-items: flex-start;
+    }
+
+    .steps li::before {
+      content: counter(step);
+      min-width: 2rem;
+      height: 2rem;
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .steps li > div { padding-top: 0.1rem; }
+
+    /* ── Roadmap ── */
+    .roadmap { list-style: none; margin-top: 0.75rem; }
+
+    .roadmap li {
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.45rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.93rem;
+      align-items: flex-start;
+    }
+
+    .roadmap li:last-child { border-bottom: none; }
+
+    .roadmap li::before {
+      content: "○";
+      color: var(--muted);
+      flex-shrink: 0;
+      margin-top: 0.05rem;
+    }
+
+    /* ── Two-column explainer ── */
+    .explainer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 560px) {
+      .explainer-grid { grid-template-columns: 1fr; }
+    }
+
+    .explainer-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem;
+    }
+
+    .explainer-card .tool-name {
+      font-weight: 700;
+      font-size: 1rem;
+      color: #fff;
+      margin-bottom: 0.25rem;
+    }
+
+    .explainer-card .tool-role {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      margin-bottom: 0.6rem;
+    }
+
+    .explainer-card p {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.55;
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.5rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    footer a { color: var(--muted); }
+    footer a:hover { color: var(--accent); }
+
+    /* ── Nav ── */
+    nav {
+      position: sticky;
+      top: 0;
+      background: rgba(15, 17, 23, 0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.6rem 1.5rem;
+      z-index: 100;
+      overflow-x: auto;
+    }
+
+    .nav-inner {
+      display: flex;
+      gap: 0.25rem;
+      max-width: var(--max-w);
+      margin: 0 auto;
+      flex-wrap: nowrap;
+    }
+
+    nav a {
+      color: var(--muted);
+      font-size: 0.82rem;
+      white-space: nowrap;
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    nav a:hover {
+      color: var(--text);
+      background: var(--surface);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>LLM Observability Dashboard</h1>
+  <p>Track request count, latency, token usage, estimated cost, and failures across LLM providers — all in a local Prometheus + Grafana stack.</p>
+  <div class="badge-row">
+    <span class="badge">FastAPI</span>
+    <span class="badge">Prometheus</span>
+    <span class="badge">Grafana</span>
+    <span class="badge">Docker Compose</span>
+    <span class="badge">Python</span>
+  </div>
+</header>
+
+<nav>
+  <div class="nav-inner">
+    <a href="#what">What</a>
+    <a href="#why">Why</a>
+    <a href="#how">How it works</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#metrics">Metrics</a>
+    <a href="#explainer">Prometheus &amp; Grafana</a>
+    <a href="#setup">Setup</a>
+    <a href="#roadmap">Roadmap</a>
+  </div>
+</nav>
+
+<main>
+
+  <!-- WHAT -->
+  <section id="what">
+    <h2>What is this project?</h2>
+    <p>
+      LLM Observability Dashboard is a demo observability stack for LLM-backed APIs.
+      It wraps a FastAPI app with Prometheus metrics and ships a prebuilt Grafana dashboard
+      that visualizes those metrics in real time.
+    </p>
+    <p>
+      The app uses a local simulator — no real LLM API keys are needed. You get a working
+      metrics pipeline out of the box: send requests, watch counters and histograms update,
+      and explore the Grafana dashboard.
+    </p>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-label">Backend</div>
+        <div class="card-value">FastAPI (Python)</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Metrics store</div>
+        <div class="card-value">Prometheus</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Visualization</div>
+        <div class="card-value">Grafana</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Deployment</div>
+        <div class="card-value">Docker Compose</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Data source</div>
+        <div class="card-value">Simulated traffic</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Setup time</div>
+        <div class="card-value">~2 minutes</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <h2>Why it was built</h2>
+    <p>
+      LLM APIs are opaque by default. You send a prompt and get a response,
+      but there's no built-in visibility into cost, latency, or failure rate —
+      especially across multiple providers or models.
+    </p>
+    <p>
+      This project shows how to instrument an LLM API the same way you'd
+      instrument any production service. The patterns here — metrics, labels,
+      dashboards, PromQL queries — apply directly to real deployments.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Problem</th>
+            <th>This project</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>No cost visibility</td><td>Tracks estimated USD cost per request, by model</td></tr>
+          <tr><td>No latency tracking</td><td>Records p50/p95/p99 via histogram</td></tr>
+          <tr><td>Failures go unnoticed</td><td>Counts errors, computes error rate</td></tr>
+          <tr><td>Token usage invisible</td><td>Tracks input and output tokens separately</td></tr>
+          <tr><td>Hard to compare models</td><td>All metrics labeled by provider and model</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <h2>How it works</h2>
+    <ol style="padding-left: 1.25rem; color: var(--text); line-height: 2;">
+      <li>A request hits the FastAPI <span class="inline-code">POST /chat</span> endpoint.</li>
+      <li>The app calls <span class="inline-code">FakeLLMSimulator.generate()</span>, which produces realistic latency, token counts, and occasional failures — without making real API calls.</li>
+      <li>The app records Prometheus metrics using consistent labels (<span class="inline-code">provider</span>, <span class="inline-code">model</span>, <span class="inline-code">endpoint</span>, <span class="inline-code">feature</span>, <span class="inline-code">status</span>).</li>
+      <li>Prometheus scrapes <span class="inline-code">/metrics</span> every 5 seconds and stores the time series.</li>
+      <li>Grafana reads Prometheus and renders the prebuilt dashboard.</li>
+    </ol>
+    <div class="callout">
+      <p>The simulator injects an 8% failure rate so error-rate panels in the dashboard have something to show.</p>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE -->
+  <section id="architecture">
+    <h2>Architecture</h2>
+    <div class="arch-box">
+      <span class="hi">HTTP Request</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;│<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+      <span class="hi">FastAPI</span> <span class="dim">(port 8000)</span><br>
+      &nbsp;&nbsp;├── /chat &nbsp;&nbsp;&nbsp; <span class="dim">→ runs simulator, records metrics</span><br>
+      &nbsp;&nbsp;├── /health &nbsp;&nbsp;<span class="dim">→ health check</span><br>
+      &nbsp;&nbsp;└── /metrics &nbsp;<span class="dim">→ Prometheus scrape endpoint</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;│<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+      <span class="ok">Prometheus</span> <span class="dim">(port 9090) — scrapes every 5s</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;│<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+      <span class="ok">Grafana</span> <span class="dim">(port 3000) — prebuilt dashboard, auto-provisioned</span>
+    </div>
+    <p style="margin-top: 1rem;">All three services are wired together via Docker Compose. No manual configuration needed.</p>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <h2>Key metrics tracked</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>llm_requests_total</code></td>
+            <td>Counter</td>
+            <td>Total requests processed</td>
+          </tr>
+          <tr>
+            <td><code>llm_errors_total</code></td>
+            <td>Counter</td>
+            <td>Total failed requests</td>
+          </tr>
+          <tr>
+            <td><code>llm_input_tokens_total</code></td>
+            <td>Counter</td>
+            <td>Total input tokens consumed</td>
+          </tr>
+          <tr>
+            <td><code>llm_output_tokens_total</code></td>
+            <td>Counter</td>
+            <td>Total output tokens generated</td>
+          </tr>
+          <tr>
+            <td><code>llm_estimated_cost_usd_total</code></td>
+            <td>Counter</td>
+            <td>Cumulative estimated cost (USD)</td>
+          </tr>
+          <tr>
+            <td><code>llm_request_latency_seconds</code></td>
+            <td>Histogram</td>
+            <td>Request latency (buckets: 50ms–21s)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top: 0.75rem;">All metrics include labels: <span class="inline-code">provider</span>, <span class="inline-code">model</span>, <span class="inline-code">endpoint</span>, <span class="inline-code">feature</span>, <span class="inline-code">status</span>.</p>
+
+    <h3>Sample PromQL queries</h3>
+    <p>Error rate:</p>
+    <pre><code>sum(rate(llm_errors_total[5m])) / sum(rate(llm_requests_total[5m]))</code></pre>
+    <p>p95 latency by model:</p>
+    <pre><code>histogram_quantile(0.95,
+  sum(rate(llm_request_latency_seconds_bucket[5m])) by (le, model)
+)</code></pre>
+    <p>Estimated cost rate by model:</p>
+    <pre><code>sum by (model) (rate(llm_estimated_cost_usd_total[5m]))</code></pre>
+  </section>
+
+  <!-- EXPLAINER -->
+  <section id="explainer">
+    <h2>Prometheus &amp; Grafana — plain English</h2>
+    <p>If you haven't used these tools before:</p>
+    <div class="explainer-grid">
+      <div class="explainer-card">
+        <div class="tool-name">Prometheus</div>
+        <div class="tool-role">Metrics collection &amp; storage</div>
+        <p>Your app exposes a <code>/metrics</code> endpoint with numbers. Prometheus scrapes that endpoint on a schedule and stores each value as a time series — metric name, labels, value, timestamp. It also has a query language (PromQL) for aggregations like rates and percentiles.</p>
+      </div>
+      <div class="explainer-card">
+        <div class="tool-name">Grafana</div>
+        <div class="tool-role">Visualization</div>
+        <p>Grafana connects to Prometheus as a data source. You write PromQL queries, and Grafana turns the results into charts, graphs, and dashboards. It doesn't store any data itself — it just reads from Prometheus and renders it.</p>
+      </div>
+    </div>
+    <div class="callout" style="margin-top: 1.25rem;">
+      <p><strong>In this project:</strong> FastAPI exposes <span class="inline-code">/metrics</span> → Prometheus scrapes it every 5s → Grafana reads Prometheus → you see a live dashboard. Docker Compose wires all three services together automatically.</p>
+    </div>
+  </section>
+
+  <!-- SETUP -->
+  <section id="setup">
+    <h2>Setup</h2>
+    <p>Requirements: <a href="https://docs.docker.com/get-docker/" target="_blank" rel="noopener">Docker</a> with Compose.</p>
+    <ol class="steps">
+      <li>
+        <div>
+          <strong>Clone the repo</strong>
+          <pre><code>git clone https://github.com/srimonchaari/llm-observability.git
+cd llm-observability</code></pre>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Start all services</strong>
+          <pre><code>docker compose up --build</code></pre>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Send a request</strong>
+          <pre><code>curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "feature": "support-bot",
+    "endpoint": "/chat",
+    "prompt": "Summarize customer issues",
+    "max_output_tokens": 120
+  }'</code></pre>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Open Grafana</strong>
+          <p>Go to <span class="inline-code">http://localhost:3000</span>, log in with <span class="inline-code">admin / admin</span>, and open the <em>LLM Cost + Latency Monitor</em> dashboard.</p>
+        </div>
+      </li>
+    </ol>
+    <div class="card-grid" style="margin-top: 0.5rem;">
+      <div class="card">
+        <div class="card-label">FastAPI</div>
+        <div class="card-value">http://localhost:8000</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Prometheus</div>
+        <div class="card-value">http://localhost:9090</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Grafana</div>
+        <div class="card-value">http://localhost:3000</div>
+      </div>
+    </div>
+    <div class="callout warning" style="margin-top: 1.25rem;">
+      <p><strong>Note:</strong> Cost figures are estimates based on hardcoded per-1K token pricing. Token counts are approximated from word count, not a real tokenizer. Do not use these numbers for billing.</p>
+    </div>
+  </section>
+
+  <!-- ROADMAP -->
+  <section id="roadmap">
+    <h2>Roadmap</h2>
+    <ul class="roadmap">
+      <li>Real provider integrations — OpenAI, Anthropic, Gemini</li>
+      <li>Automatic middleware to track all endpoints without per-route code</li>
+      <li>Structured logging with request IDs</li>
+      <li>Distributed tracing via OpenTelemetry</li>
+      <li>Prometheus alerting rules for cost spikes and latency regressions</li>
+      <li>Per-tenant or per-project metric labels</li>
+      <li>Daily cost rollups and budget threshold alerts</li>
+      <li>Load testing scripts for sustained traffic simulation</li>
+      <li>Unit and integration test coverage</li>
+    </ul>
+  </section>
+
+</main>
+
+<footer>
+  <p>
+    <a href="https://github.com/srimonchaari/llm-observability" target="_blank" rel="noopener">GitHub</a>
+    &nbsp;·&nbsp;
+    Built with FastAPI, Prometheus, and Grafana
+  </p>
+</footer>
+
+</body>
+</html>
